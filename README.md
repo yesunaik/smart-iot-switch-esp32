@@ -63,31 +63,26 @@ smart-iot-switch-esp32/
 ---
 
 ### 3️⃣ Backend Setup
-```bash
-pip install flask  # or required dependencies
-python main.py
-4️⃣ Run the System
+- pip install flask  # or required dependencies
+- python main.py
+
+---
+
+### 4️⃣ Run the System
 Connect ESP32 to WiFi
 Access the web interface
 Control devices remotely
 🛠️ Tech Stack
 
-Embedded:
+Embedded: ESP32 (Arduino)
+Backend: Python (Flask / FastAPI)
+Frontend: HTML, CSS, JavaScript
+Communication: WiFi (HTTP-based control)
 
-ESP32 (Arduino)
+---
 
-Backend:
 
-Python (Flask / FastAPI)
-
-Frontend:
-
-HTML, CSS, JavaScript
-
-Communication:
-
-WiFi (HTTP-based control)
-👨‍💻 My Contribution
+### 👨‍💻 My Contribution
 Designed complete IoT system architecture
 Developed ESP32 firmware for device control
 Built backend server for API communication
@@ -103,14 +98,13 @@ Mobile app integration
 Cloud deployment (AWS / Azure)
 Voice assistant integration
 Real-time analytics dashboard
-🔗 Author
 
-Yesu Naik
-📧 yesunaik2001@gmail.com
+---
 
-🔗 GitHub: https://github.com/yesunaik
-
-🔗 LinkedIn: https://linkedin.com/in/yesu-naik-749734246
-
+### 🔗 Author
+- Yesu Naik
+- 📧 yesunaik2001@gmail.com
+- 🔗 GitHub: https://github.com/yesunaik
+- 🔗 LinkedIn: https://linkedin.com/in/yesu-naik-749734246
 
 ---
