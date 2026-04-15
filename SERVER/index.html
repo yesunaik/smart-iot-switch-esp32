@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>SmartSwitch &#8212; Server</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:#f0f2f5;color:#1a1a2e;min-height:100vh}
+#loginView{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#f8f9ff 0%,#eef1f9 100%);position:relative;overflow:hidden}
+#loginView::before{content:'';position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(239,51,64,.06) 0%,transparent 70%);top:-200px;right:-100px;pointer-events:none}
+#loginView::after{content:'';position:absolute;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(66,165,245,.05) 0%,transparent 70%);bottom:-100px;left:-50px;pointer-events:none}
+.login-card{width:400px;background:#fff;border-radius:20px;padding:40px 36px;box-shadow:0 20px 60px rgba(0,0,0,.09),0 4px 16px rgba(0,0,0,.04);position:relative;z-index:1}
+.login-logo{width:150px;display:block;margin:0 auto 12px}
+.login-brand{text-align:center;margin-bottom:6px}
+.login-title{font-size:22px;font-weight:800;color:#1a1a2e;letter-spacing:-.02em}
+.login-sub{text-align:center;font-size:12px;color:#9ca3af;margin-bottom:32px;display:flex;align-items:center;justify-content:center;gap:6px}
+.server-badge{display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#ef3340,#c62828);color:#fff;font-size:9px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.06em}
+.server-badge::before{content:'&#9679;';font-size:6px;animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+.lbl{display:block;font-size:11px;font-weight:600;color:#6b7280;margin-bottom:6px;letter-spacing:.05em;text-transform:uppercase}
+.inp{width:100%;padding:12px 16px;background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:10px;font-size:14px;font-family:'Inter',sans-serif;color:#1a1a2e;margin-bottom:16px;transition:all .2s}
+.inp:focus{outline:none;border-color:#ef3340;background:#fff;box-shadow:0 0 0 3px rgba(239,51,64,.08)}
+.inp::placeholder{color:#d1d5db}
+.pw-wrap{position:relative;margin-bottom:24px}
+.pw-wrap .inp{margin-bottom:0;padding-right:44px}
+.pw-eye{position:absolute;right:14px;top:50%;transform:translateY(-50%);cursor:pointer;color:#9ca3af;transition:color .2s}
+.pw-eye:hover{color:#ef3340}
+.pw-eye svg{width:16px;height:16px}
+.login-btn{width:100%;padding:14px;background:linear-gradient(135deg,#ef3340 0%,#c62828 100%);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;letter-spacing:.02em;transition:all .2s;box-shadow:0 4px 14px rgba(239,51,64,.3)}
+.login-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(239,51,64,.4)}
+.login-btn:active{transform:translateY(0)}
+.login-btn:disabled{background:#e5e7eb;color:#9ca3af;cursor:not-allowed;box-shadow:none;transform:none}
+.login-err{text-align:center;font-size:12px;color:#ef3340;margin-top:12px;min-height:16px;font-weight:500}
+.login-note{text-align:center;font-size:11px;color:#9ca3af;margin-top:16px;padding-top:16px;border-top:1px solid #f3f4f6}
+.login-note b{color:#ef3340}
+#dashView{display:none;flex-direction:column;height:100vh;overflow:hidden}
+header{height:60px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0;position:sticky;top:0;z-index:100;box-shadow:0 1px 12px rgba(0,0,0,.05)}
+.hdr-left{display:flex;align-items:center;gap:12px}
+.hdr-logo{height:28px}
+.hdr-title{font-size:16px;font-weight:700;color:#1a1a2e;letter-spacing:-.01em}
+.hdr-servertag{font-size:9px;font-weight:700;background:linear-gradient(135deg,#ef3340,#c62828);color:#fff;padding:3px 8px;border-radius:20px;letter-spacing:.06em}
+.hdr-back{display:none;align-items:center;gap:5px;background:none;border:none;color:#6b7280;font-size:13px;font-family:'Inter',sans-serif;cursor:pointer;padding:6px 12px;border-radius:8px;transition:all .2s;font-weight:500}
+.hdr-back:hover{background:#f3f4f6;color:#1a1a2e}
+.hdr-back svg{width:16px;height:16px}
+.hdr-right{display:flex;align-items:center;gap:20px}
+.hdr-stats{display:flex;gap:20px}
+.hdr-stat{display:flex;flex-direction:column;align-items:flex-end;line-height:1.3}
+.hdr-stat-lbl{font-size:9px;color:#9ca3af;text-transform:uppercase;letter-spacing:.07em;font-weight:600}
+.hdr-stat-val{font-size:12px;font-weight:700;color:#6b7280}
+.hdr-stat-val.active{color:#10b981}.hdr-stat-val.offline{color:#ef4444}
+.hdr-stat-val.relay-on{color:#10b981}.hdr-stat-val.relay-off{color:#ef4444}
+.user-wrap{position:relative}
+.user-btn{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#ef3340,#c62828);color:#fff;font-size:14px;font-weight:700;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(239,51,64,.3);transition:box-shadow .2s}
+.user-btn:hover{box-shadow:0 4px 14px rgba(239,51,64,.4)}
+.user-label{font-size:9px;color:#9ca3af;text-align:center;margin-top:2px;font-weight:500}
+.user-dropdown{display:none;position:absolute;right:0;top:calc(100% + 10px);background:#fff;border:1px solid #e5e7eb;border-radius:12px;min-width:190px;z-index:999;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.12)}
+.user-dropdown.open{display:block}
+.user-dd-header{padding:12px 16px;background:linear-gradient(135deg,#fafbff,#f3f4f6);border-bottom:1px solid #f0f0f0}
+.user-dd-name{font-size:13px;font-weight:700;color:#1a1a2e}
+.user-dd-role{font-size:10px;color:#9ca3af;margin-top:2px;font-weight:500}
+.user-dd-item{display:flex;align-items:center;gap:10px;padding:11px 16px;font-size:13px;color:#4b5563;cursor:pointer;border:none;background:none;width:100%;text-align:left;transition:background .15s;font-family:'Inter',sans-serif;font-weight:500}
+.user-dd-item:hover{background:#f9fafb;color:#1a1a2e}
+.user-dd-item svg{width:14px;height:14px;flex-shrink:0}
+.user-dd-divider{height:1px;background:#f0f0f0}
+.user-dd-item.logout{color:#ef4444}
+#offlineBanner{display:none;background:linear-gradient(90deg,#fff8e1,#fff3cd);border-bottom:1px solid #f59e0b;padding:8px 24px;font-size:12px;color:#92400e;text-align:center;font-weight:600}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,15,30,.5);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:16px;padding:28px;width:340px;box-shadow:0 20px 60px rgba(0,0,0,.15)}
+.modal-title{font-size:16px;font-weight:700;color:#1a1a2e;margin-bottom:20px}
+.modal-inp{width:100%;padding:11px 14px;background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;color:#1a1a2e;margin-bottom:10px;font-family:'Inter',sans-serif;transition:border-color .2s}
+.modal-inp:focus{outline:none;border-color:#ef3340;background:#fff}
+.modal-btns{display:flex;gap:10px;margin-top:6px}
+.modal-save{flex:1;padding:11px;background:linear-gradient(135deg,#ef3340,#c62828);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif}
+.modal-cancel{flex:1;padding:11px;background:#f3f4f6;color:#6b7280;border:none;border-radius:8px;font-size:13px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:500}
+.modal-msg{font-size:12px;min-height:16px;margin-top:8px;text-align:center;font-weight:500}
+.modal-msg.ok{color:#10b981}.modal-msg.err{color:#ef4444}
+.view{flex:1;flex-direction:column;background:#f0f2f5;overflow-y:auto;min-height:0}
+.view:not(.active){display:none!important}
+.view.active{display:flex}
+#homeView{padding:28px 20px;flex:1;display:flex;flex-direction:column;align-items:center;background:#f0f2f5;overflow-y:auto}
+.home-section-title{font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:.12em;margin-bottom:16px;width:100%;max-width:500px;font-weight:600}
+.card-grid{display:flex;flex-direction:column;gap:12px;width:100%;max-width:500px;margin-bottom:24px}
+.nav-card{background:#fff;border:1.5px solid transparent;border-radius:16px;padding:18px 20px;cursor:pointer;transition:all .22s ease;display:flex;align-items:center;gap:16px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+.nav-card:hover{border-color:#ef3340;box-shadow:0 6px 24px rgba(239,51,64,.12);transform:translateY(-1px)}
+.nav-card:active{transform:scale(.99)}
+.nav-card-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.nav-card-icon svg{width:22px;height:22px}
+.nav-card-body{flex:1;min-width:0}
+.nav-card-title{font-size:14px;font-weight:700;color:#1a1a2e;margin-bottom:3px}
+.nav-card-sub{font-size:11px;color:#9ca3af;font-weight:500}
+.nav-card-badge{font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px;flex-shrink:0;letter-spacing:.02em}
+.badge-on{background:#d1fae5;color:#065f46;border:1px solid #6ee7b7}
+.badge-off{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
+.badge-active{background:#fef3c7;color:#92400e;border:1px solid #fcd34d}
+.badge-blue{background:#dbeafe;color:#1e40af;border:1px solid #93c5fd}
+.badge-grey{background:#f3f4f6;color:#6b7280;border:1px solid #e5e7eb}
+.nav-card-arrow{font-size:20px;color:#d1d5db;margin-left:4px;flex-shrink:0;font-weight:300}
+.page-view{padding:24px 20px;display:flex;flex-direction:column;align-items:center;gap:16px;flex:1;overflow-y:auto;background:#f0f2f5}
+.section{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:22px;box-shadow:0 2px 10px rgba(0,0,0,.04);width:100%;max-width:500px}
+.section-title{font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.1em;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
+.section-title small{font-size:10px;font-weight:500;color:#d1d5db;text-transform:none;letter-spacing:0}
+.sh-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.sh-tile{background:linear-gradient(135deg,#f9fafb,#f3f4f6);border:1px solid #f0f0f0;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:6px}
+.sh-tile-top{display:flex;align-items:center;justify-content:space-between}
+.sh-tile-lbl{font-size:9px;color:#9ca3af;text-transform:uppercase;letter-spacing:.07em;font-weight:600}
+.sh-tile-sub{font-size:10px;color:#9ca3af;font-weight:500}
+.sh-tile-val{font-size:26px;font-weight:800;color:#1a1a2e;letter-spacing:-.02em;line-height:1}
+.sh-bar-wrap{background:#e5e7eb;border-radius:6px;height:5px;overflow:hidden}
+.sh-bar{height:100%;border-radius:6px;transition:width .6s ease,background .3s}
+.sh-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #f9fafb;font-size:13px}
+.sh-row:last-child{border-bottom:none}
+.sh-lbl{color:#9ca3af;font-size:12px;font-weight:500}
+.sh-val{font-weight:600;color:#1a1a2e;font-size:12px;text-align:right}
+.sh-sdot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;background:#d1d5db;vertical-align:middle}
+.sh-sdot.ok{background:#10b981}.sh-sdot.warn{background:#f59e0b}.sh-sdot.err{background:#ef4444}
+.sh-req-badge{display:inline-flex;align-items:center;background:#dbeafe;color:#1e40af;border:1px solid #93c5fd;border-radius:20px;font-size:10px;font-weight:700;padding:2px 8px}
+.relay-state{display:flex;align-items:center;gap:16px;background:linear-gradient(135deg,#f9fafb,#f3f4f6);border:1px solid #f0f0f0;border-radius:12px;padding:18px;margin-bottom:18px}
+.dot{width:22px;height:22px;border-radius:50%;flex-shrink:0;transition:all .3s}
+.dot.on{background:#10b981;box-shadow:0 0 0 4px rgba(16,185,129,.15),0 0 16px rgba(16,185,129,.4)}
+.dot.off{background:#ef4444;box-shadow:0 0 0 4px rgba(239,68,68,.12),0 0 14px rgba(239,68,68,.3)}
+.dot.rst{background:#f59e0b;box-shadow:0 0 0 4px rgba(245,158,11,.15),0 0 14px rgba(245,158,11,.4)}
+.relay-lbl{font-size:24px;font-weight:800;letter-spacing:-.02em;color:#1a1a2e}
+.relay-sub{font-size:12px;color:#9ca3af;margin-top:3px;font-weight:500}
+.relay-btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.rbtn{padding:16px 0;border:none;border-radius:12px;color:#fff;font-size:13px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;transition:all .2s;letter-spacing:.01em}
+.rbtn:hover{transform:translateY(-1px);filter:brightness(1.05)}
+.rbtn:active{transform:scale(.96);filter:brightness(.95)}
+.rbtn:disabled{opacity:.35;cursor:not-allowed;transform:none;filter:none}
+.rbtn em{font-style:normal;font-size:20px}
+.rbtn-on{background:linear-gradient(135deg,#10b981,#059669);box-shadow:0 4px 12px rgba(16,185,129,.3)}
+.rbtn-off{background:linear-gradient(135deg,#ef4444,#dc2626);box-shadow:0 4px 12px rgba(239,68,68,.3)}
+.rbtn-rst{background:linear-gradient(135deg,#f59e0b,#d97706);box-shadow:0 4px 12px rgba(245,158,11,.3)}
+.st-table{width:100%;border-collapse:collapse}
+.st-table tr{border-bottom:1px solid #f9fafb}
+.st-table tr:last-child{border-bottom:none}
+.st-table td{padding:10px 0;font-size:13px}
+.st-table td:first-child{color:#9ca3af;font-weight:500}
+.st-table td:last-child{font-weight:600;color:#1a1a2e;text-align:right}
+.c-on{color:#059669!important}.c-off{color:#dc2626!important}.c-rst{color:#d97706!important}
+.c-eth{color:#1d4ed8!important}.c-wfi{color:#059669!important}
+.ar-toggle-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid #f9fafb}
+.ar-lbl{font-size:13px;color:#374151;font-weight:600}
+.ar-sub{font-size:11px;color:#9ca3af;margin-top:2px;font-weight:400}
+.ar-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid #f9fafb}
+.ar-row:last-of-type{border-bottom:none}
+.ar-select{font-size:12px;padding:6px 10px;background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:8px;color:#374151;cursor:pointer;font-family:'Inter',sans-serif;font-weight:500}
+.ar-select:focus{outline:none;border-color:#ef3340}
+.tog{position:relative;width:44px;height:24px;flex-shrink:0}
+.tog input{opacity:0;width:0;height:0;position:absolute}
+.tog-slider{position:absolute;inset:0;background:#e5e7eb;border-radius:24px;cursor:pointer;transition:background .2s}
+.tog-slider:before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.tog input:checked+.tog-slider{background:linear-gradient(135deg,#ef3340,#c62828)}
+.tog input:checked+.tog-slider:before{transform:translateX(20px)}
+.ar-status{display:flex;align-items:center;gap:8px;padding:10px 14px;background:linear-gradient(135deg,#f9fafb,#f3f4f6);border-radius:10px;margin-top:12px;font-size:12px;color:#6b7280;font-weight:500}
+.ar-sdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;background:#d1d5db}
+.ar-sdot.on{background:#10b981;box-shadow:0 0 0 2px rgba(16,185,129,.2)}.ar-sdot.off{background:#d1d5db}
+.log-filters{display:flex;gap:6px;margin-bottom:10px}
+.ltag{font-size:11px;padding:4px 12px;border-radius:20px;border:1.5px solid #e5e7eb;background:transparent;color:#9ca3af;cursor:pointer;font-family:'Inter',sans-serif;font-weight:500;transition:all .2s}
+.ltag.on{background:#1a1a2e;color:#fff;border-color:#1a1a2e}
+.logbox{font-size:11px;font-family:'JetBrains Mono','Courier New',monospace;background:#f9fafb;border:1px solid #f0f0f0;border-radius:10px;padding:12px;overflow-y:auto;max-height:170px;min-height:90px}
+.ll{display:flex;gap:8px;padding:3px 0;border-bottom:1px solid #f3f4f6;line-height:1.5}
+.ll:last-child{border-bottom:none}
+.lt{color:#d1d5db;min-width:54px;flex-shrink:0;font-size:10px;font-weight:500}
+.lk{min-width:36px;flex-shrink:0;font-weight:700}
+.lk-on{color:#059669}.lk-off{color:#dc2626}.lk-rst{color:#d97706}.lk-info{color:#1d4ed8}
+.lm{color:#6b7280}
+.log-foot{display:flex;justify-content:flex-end;margin-top:8px}
+.clr-btn{font-size:11px;padding:4px 12px;border:1.5px solid #e5e7eb;border-radius:8px;background:transparent;color:#9ca3af;cursor:pointer;font-family:'Inter',sans-serif;font-weight:500;transition:all .2s}
+.clr-btn:hover{color:#ef3340;border-color:#ef3340}
+.sched-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px}
+.sched-stat{background:linear-gradient(135deg,#f9fafb,#f3f4f6);border:1px solid #f0f0f0;border-radius:12px;padding:12px 8px;text-align:center}
+.sched-stat-val{font-size:20px;font-weight:800;color:#1a1a2e;letter-spacing:-.02em}
+.sched-stat-lbl{font-size:9px;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em;margin-top:4px;font-weight:600}
+.sched-status-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:linear-gradient(135deg,#f9fafb,#f3f4f6);border:1px solid #f0f0f0;border-radius:10px;margin-bottom:14px}
+.sched-dot{width:10px;height:10px;border-radius:50%;background:#d1d5db;flex-shrink:0;transition:all .3s}
+.sched-dot.running{background:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,.2)}
+.sched-dot.stopped{background:#ef4444}
+.sched-status-lbl{font-size:13px;font-weight:600;color:#374151}
+.time-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px}
+.time-cell{display:flex;flex-direction:column;align-items:center;gap:5px}
+.time-cell input{width:100%;text-align:center;padding:12px 4px;background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:10px;font-size:20px;font-weight:800;color:#1a1a2e;font-family:'Inter',sans-serif;transition:border-color .2s}
+.time-cell input:focus{outline:none;border-color:#ef3340;background:#fff}
+.time-cell span{font-size:9px;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+.sched-btns{display:flex;gap:10px;margin-top:2px}
+.sched-start{flex:1;padding:12px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;box-shadow:0 3px 10px rgba(16,185,129,.25)}
+.sched-start:hover{transform:translateY(-1px)}
+.sched-stop{flex:1;padding:12px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;box-shadow:0 3px 10px rgba(239,68,68,.25)}
+.sched-stop:hover{transform:translateY(-1px)}
+.tip-status{display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#f9fafb,#f3f4f6);border:1px solid #f0f0f0;border-radius:12px;padding:16px;margin-bottom:14px}
+.tip-dot{width:16px;height:16px;border-radius:50%;flex-shrink:0;transition:all .3s;background:#d1d5db}
+.tip-dot.online{background:#10b981;box-shadow:0 0 0 4px rgba(16,185,129,.15),0 0 14px rgba(16,185,129,.4)}
+.tip-dot.offline{background:#ef4444;box-shadow:0 0 0 4px rgba(239,68,68,.12),0 0 12px rgba(239,68,68,.3)}
+.tip-lbl{font-size:15px;font-weight:700;color:#1a1a2e}
+.tip-sub{font-size:11px;color:#9ca3af;margin-top:3px;font-weight:500}
+.tip-row{display:flex;gap:8px;margin-bottom:14px}
+.tip-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tip-stat{background:linear-gradient(135deg,#f9fafb,#f3f4f6);border:1px solid #f0f0f0;border-radius:12px;padding:12px;text-align:center}
+.tip-stat-val{font-size:18px;font-weight:800;color:#1a1a2e;letter-spacing:-.01em}
+.tip-stat-lbl{font-size:9px;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em;margin-top:4px;font-weight:600}
+.field-inp{flex:1;padding:11px 14px;background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:10px;font-size:13px;color:#1a1a2e;font-family:'Inter',sans-serif;transition:all .2s}
+.field-inp:focus{outline:none;border-color:#ef3340;background:#fff}
+.field-inp::placeholder{color:#d1d5db}
+.field-select{width:100%;padding:11px 14px;background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:10px;font-size:13px;color:#374151;cursor:pointer;font-family:'Inter',sans-serif;font-weight:500;margin-bottom:8px;transition:border-color .2s}
+.field-select:focus{outline:none;border-color:#ef3340}
+.btn-primary{padding:11px 18px;background:linear-gradient(135deg,#ef3340,#c62828);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;box-shadow:0 3px 10px rgba(239,51,64,.25)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 5px 16px rgba(239,51,64,.35)}
+.btn-primary:disabled{background:#e5e7eb;color:#9ca3af;cursor:not-allowed;box-shadow:none;transform:none}
+.btn-secondary{padding:11px 18px;background:#f3f4f6;color:#6b7280;border:1.5px solid #e5e7eb;border-radius:10px;font-size:13px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:500;transition:all .2s}
+.btn-secondary:hover{background:#e5e7eb;color:#1a1a2e}
+.msg{font-size:12px;min-height:16px;margin-top:10px;text-align:center;font-weight:500}
+.msg.ok{color:#059669}.msg.err{color:#dc2626}
+footer{height:30px;background:#fff;border-top:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0}
+footer span{font-size:10px;color:#d1d5db;font-weight:500}
+.expand-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;max-width:500px;padding:13px;background:#fff;border:1.5px dashed #e5e7eb;border-radius:16px;cursor:pointer;font-size:13px;font-weight:600;color:#9ca3af;transition:all .2s;margin-bottom:8px}
+.expand-btn:hover{border-color:#ef3340;color:#ef3340;background:linear-gradient(135deg,#fff5f5,#fff)}
+.expand-btn svg{width:18px;height:18px}
+.all-section-divider{font-size:10px;font-weight:700;color:#d1d5db;text-transform:uppercase;letter-spacing:.12em;width:100%;max-width:500px;margin:8px 0 4px;padding:0 4px}
+#allView{overflow:hidden}
+#allView .page-view{display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:10px;padding:12px 16px;height:calc(100vh - 92px);overflow:hidden;align-items:stretch;max-width:none}
+#allView .all-section-divider{display:none}
+#allView footer{display:none}
+#allView .section{overflow:hidden;display:flex;flex-direction:column;max-width:none;padding:14px 16px;margin:0}
+#allView .section-title{margin-bottom:10px;font-size:10px}
+#allView .relay-state{padding:10px 12px;margin-bottom:10px}
+#allView .relay-lbl{font-size:18px}
+#allView .dot{width:16px;height:16px}
+#allView .rbtn{padding:10px 0;font-size:12px}
+#allView .rbtn em{font-size:16px}
+#allView .st-table td{padding:5px 0;font-size:12px}
+#allView .ar-row{padding:7px 0}
+#allView .ar-lbl{font-size:12px}
+#allView .ar-sub{font-size:10px}
+#allView .ar-status{padding:7px 10px;margin-top:8px;font-size:11px}
+#allView .ar-sdot{width:7px;height:7px}
+#allView .sched-stats{margin-bottom:8px;gap:6px}
+#allView .sched-stat{padding:8px 4px}
+#allView .sched-stat-val{font-size:16px}
+#allView .sched-status-row{padding:7px 10px;margin-bottom:8px}
+#allView .time-row{gap:6px;margin-bottom:8px}
+#allView .time-cell input{padding:7px 2px;font-size:16px}
+#allView .sched-btns{gap:8px}
+#allView .sched-start,#allView .sched-stop{padding:9px}
+#allView .tip-status{padding:10px 12px;margin-bottom:10px}
+#allView .tip-lbl{font-size:13px}
+#allView .tip-dot{width:14px;height:14px}
+#allView .tip-row{margin-bottom:8px}
+#allView .tip-stats{gap:8px}
+#allView .tip-stat{padding:8px}
+#allView .tip-stat-val{font-size:15px}
+#allView .sh-grid{gap:8px;margin-bottom:8px}
+#allView .sh-tile{padding:10px}
+#allView .sh-tile-val{font-size:20px}
+#allView .sh-row{padding:5px 0;font-size:12px}
+#allView .sh-lbl{font-size:11px}
+#allView .sh-val{font-size:11px}
+#allView .msg{margin-top:5px;font-size:11px}
+#allView .btn-primary{padding:8px 14px;font-size:12px}
+</style>
+</head>
+<body>
+<div class="modal-overlay" id="changePwModal">
+  <div class="modal">
+    <div class="modal-title">&#128274; Change Password</div>
+    <input class="modal-inp" type="password" id="cpCurrent" placeholder="Current password">
+    <input class="modal-inp" type="password" id="cpNew" placeholder="New password">
+    <input class="modal-inp" type="password" id="cpConfirm" placeholder="Confirm new password">
+    <div class="modal-btns"><button class="modal-cancel" onclick="closeChangePw()">Cancel</button><button class="modal-save" onclick="doChangePw()">Save</button></div>
+    <div class="modal-msg" id="cpMsg"></div>
+  </div>
+</div>
+<div id="loginView">
+  <div class="login-card">
+    <img src="verifaiLogo.jpg" class="login-logo" alt="SmartSwitch">
+    <div class="login-brand"><div class="login-title">SmartSwitch</div></div>
+    <div class="login-sub"><span class="server-badge">SERVER</span><span>Dashboard &mdash; Python API</span></div>
+    <label class="lbl">Username</label>
+    <input class="inp" type="text" id="lu" placeholder="admin" onkeydown="if(event.key==='Enter')doLogin()">
+    <label class="lbl">Password</label>
+    <div class="pw-wrap">
+      <input class="inp" type="password" id="lp" placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;" onkeydown="if(event.key==='Enter')doLogin()">
+      <span class="pw-eye" onclick="togglePass('lp',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></span>
+    </div>
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">CONNECT</button>
+    <div class="login-err" id="loginErr"></div>
+    <div class="login-note">Connects to <b>Python server</b> &mdash; not ESP32 directly</div>
+  </div>
+</div>
+<div id="dashView">
+  <div id="offlineBanner">&#9888; ESP32 offline &mdash; no heartbeat received from device</div>
+  <header>
+    <div class="hdr-left">
+      <button class="hdr-back" id="hdrBack" onclick="goHome()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>Back</button>
+      <img src="verifaiLogo.jpg" class="hdr-logo" alt="">
+      <div class="hdr-title" id="hdrTitle">SmartSwitch</div>
+      <span class="hdr-servertag" id="hdrServerTag">SERVER</span>
+    </div>
+    <div class="hdr-right">
+      <div class="hdr-stats">
+        <div class="hdr-stat"><span class="hdr-stat-lbl">Device</span><span class="hdr-stat-val" id="hdrDevStatus">&mdash;</span></div>
+        <div class="hdr-stat"><span class="hdr-stat-lbl">Relay</span><span class="hdr-stat-val" id="hdrRelayStatus">&mdash;</span></div>
+        <div class="hdr-stat"><span class="hdr-stat-lbl">Net</span><span class="hdr-stat-val" id="hdrNet">&mdash;</span></div>
+        <div class="hdr-stat"><span class="hdr-stat-lbl">IP</span><span class="hdr-stat-val" id="hdrIP">&mdash;</span></div>
+      </div>
+      <div class="user-wrap">
+        <div style="display:flex;flex-direction:column;align-items:center">
+          <button class="user-btn" id="userAvatar" onclick="toggleUserMenu()">?</button>
+          <span class="user-label" id="userName">User</span>
+        </div>
+        <div class="user-dropdown" id="userDropdown">
+          <div class="user-dd-header"><div class="user-dd-name" id="ddUserName">&mdash;</div><div class="user-dd-role">Server Dashboard</div></div>
+          <button class="user-dd-item" onclick="openChangePw()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Change Password</button>
+          <div class="user-dd-divider"></div>
+          <button class="user-dd-item logout" onclick="doLogout()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Logout</button>
+        </div>
+      </div>
+    </div>
+  </header>
+  <div class="view active" id="homeView">
+    <div class="home-section-title">Dashboard</div>
+    <div class="card-grid">
+      <div class="nav-card" onclick="showView('health')"><div class="nav-card-icon" style="background:linear-gradient(135deg,rgba(66,165,245,.15),rgba(66,165,245,.05))"><svg viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M7 8l3 3 2-2 3 3" stroke-width="1.5"/></svg></div><div class="nav-card-body"><div class="nav-card-title">Server Health</div><div class="nav-card-sub">CPU, RAM, uptime</div></div><span class="nav-card-badge badge-blue" id="cardHealthBadge">Running</span><span class="nav-card-arrow">&#8250;</span></div>
+      <div class="nav-card" onclick="showView('relay')"><div class="nav-card-icon" style="background:linear-gradient(135deg,rgba(239,51,64,.15),rgba(239,51,64,.05))"><svg viewBox="0 0 24 24" fill="none" stroke="#ef3340" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div class="nav-card-body"><div class="nav-card-title">Relay Control</div><div class="nav-card-sub">ON / OFF / Restart</div></div><span class="nav-card-badge badge-off" id="cardRelayBadge">OFF</span><span class="nav-card-arrow">&#8250;</span></div>
+      <div class="nav-card" onclick="showView('commands')"><div class="nav-card-icon" style="background:linear-gradient(135deg,rgba(245,158,11,.15),rgba(245,158,11,.05))"><svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg></div><div class="nav-card-body"><div class="nav-card-title">Quick Commands</div><div class="nav-card-sub">History &amp; Auto-Restart</div></div><span class="nav-card-arrow">&#8250;</span></div>
+      <div class="nav-card" onclick="showView('status')"><div class="nav-card-icon" style="background:linear-gradient(135deg,rgba(16,185,129,.15),rgba(16,185,129,.05))"><svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div><div class="nav-card-body"><div class="nav-card-title">Device Status</div><div class="nav-card-sub" id="cardStatusSub">Loading&hellip;</div></div><span class="nav-card-badge badge-grey" id="cardNetBadge">&mdash;</span><span class="nav-card-arrow">&#8250;</span></div>
+      <div class="nav-card" onclick="showView('scheduler')"><div class="nav-card-icon" style="background:linear-gradient(135deg,rgba(139,92,246,.15),rgba(139,92,246,.05))"><svg viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="nav-card-body"><div class="nav-card-title">Scheduler</div><div class="nav-card-sub">Timed relay actions</div></div><span class="nav-card-badge badge-grey" id="cardSchedBadge">Stopped</span><span class="nav-card-arrow">&#8250;</span></div>
+      <div class="nav-card" onclick="showView('watchdog')"><div class="nav-card-icon" style="background:linear-gradient(135deg,rgba(20,184,166,.15),rgba(20,184,166,.05))"><svg viewBox="0 0 24 24" fill="none" stroke="#14b8a6" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg></div><div class="nav-card-body"><div class="nav-card-title">Device Watchdog</div><div class="nav-card-sub">Ping &amp; auto-restart</div></div><span class="nav-card-badge badge-grey" id="cardTipBadge">&mdash;</span><span class="nav-card-arrow">&#8250;</span></div>
+    </div>
+    <button class="expand-btn" onclick="showView('all')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>View All Sections</button>
+    <footer><span>SmartSwitch Server </span><span id="footerTime"></span></footer>
+  </div>
+  <div class="view" id="healthView">
+    <div class="page-view">
+      <div class="section">
+        <div class="section-title">Server Health <small id="shLastPoll"></small></div>
+        <div class="sh-grid">
+          <div class="sh-tile"><div class="sh-tile-top"><span class="sh-tile-lbl">CPU Usage</span><span class="sh-tile-sub" id="shCpuCores">&mdash;</span></div><div class="sh-tile-val" id="shCpu">&mdash;</div><div class="sh-bar-wrap"><div class="sh-bar" id="shCpuBar" style="width:0%"></div></div></div>
+          <div class="sh-tile"><div class="sh-tile-top"><span class="sh-tile-lbl">RAM Used</span><span class="sh-tile-sub" id="shRamTotal">&mdash;</span></div><div class="sh-tile-val" id="shRam">&mdash;</div><div class="sh-bar-wrap"><div class="sh-bar" id="shRamBar" style="width:0%"></div></div></div>
+        </div>
+        <div class="sh-row"><span class="sh-lbl">Server Uptime</span><span class="sh-val" id="shUptime">&mdash;</span></div>
+        <div class="sh-row"><span class="sh-lbl">Process Memory</span><span class="sh-val" id="shProcMem">&mdash;</span></div>
+        <div class="sh-row"><span class="sh-lbl">Requests / min</span><span class="sh-val"><span class="sh-req-badge" id="shReqMin">&mdash;</span></span></div>
+        <div class="sh-row"><span class="sh-lbl">Total Requests</span><span class="sh-val" id="shReqTotal">&mdash;</span></div>
+        <div class="sh-row"><span class="sh-lbl">Python Version</span><span class="sh-val" id="shPyVer">&mdash;</span></div>
+        <div class="sh-row"><span class="sh-lbl">Server Status</span><span class="sh-val"><span class="sh-sdot ok" id="shStatusDot"></span><span id="shStatusTxt">Running</span></span></div>
+      </div>
+    </div>
+    <footer><span>Server Health</span><span id="fTime1"></span></footer>
+  </div>
+  <div class="view" id="relayView">
+    <div class="page-view">
+      <div class="section">
+        <div class="section-title">Relay Control <small id="relayTime"></small></div>
+        <div class="relay-state"><div class="dot off" id="rDot"></div><div><div class="relay-lbl" id="rText">OFF</div><div class="relay-sub" id="rSub">Device is turned off</div></div></div>
+        <div class="relay-btns">
+          <button class="rbtn rbtn-on" id="bOn" onclick="relayCmd(1)"><em>&#9654;</em>ON</button>
+          <button class="rbtn rbtn-off" id="bOff" onclick="relayCmd(0)"><em>&#9632;</em>OFF</button>
+          <button class="rbtn rbtn-rst" id="bRst" onclick="relayCmd(2)"><em>&#8635;</em>RESTART</button>
+        </div>
+      </div>
+    </div>
+    <footer><span>Relay Control</span><span id="fTime2"></span></footer>
+  </div>
+  <div class="view" id="commandsView">
+    <div class="page-view">
+      <div class="section">
+        <div class="section-title">Toggle History <small id="qcTs"></small></div>
+        <div class="log-filters">
+          <button class="ltag on" onclick="setLogFilter('all',this)">All</button>
+          <button class="ltag" onclick="setLogFilter('on',this)">ON</button>
+          <button class="ltag" onclick="setLogFilter('off',this)">OFF</button>
+          <button class="ltag" onclick="setLogFilter('rst',this)">Restart</button>
+        </div>
+        <div class="logbox" id="toggleLog"><span style="color:#d1d5db">No activity yet</span></div>
+        <div class="log-foot"><button class="clr-btn" onclick="clearToggleLog()">Clear</button></div>
+      </div>
+      <div class="section">
+        <div class="section-title">Auto-Restart Watchdog</div>
+        <div class="ar-toggle-row"><div><div class="ar-lbl">Auto-restart watchdog</div><div class="ar-sub">Restart device on a fixed interval</div></div><label class="tog"><input type="checkbox" id="arEnabled" checked onchange="onArToggleChange()"><span class="tog-slider"></span></label></div>
+        <div class="ar-row" style="margin-top:2px"><div><div class="ar-lbl">Restart interval</div><div class="ar-sub">How often</div></div><select class="ar-select" id="arInterval" onchange="onArIntervalChange()"><option value="30000">30s</option><option value="60000">1 min</option><option value="120000" selected>2 min</option><option value="300000">5 min</option><option value="600000">10 min</option><option value="900000">15 min</option><option value="1800000">30 min</option><option value="3600000">60 min</option></select></div>
+        <button class="btn-primary" id="arSaveBtn" style="width:100%;margin-top:14px" onclick="saveAutoInterval()">Save &amp; Apply</button>
+        <div class="msg" id="arMsg"></div>
+        <div class="ar-status"><div class="ar-sdot" id="arDot"></div><span id="arStatusTxt">Loading&hellip;</span></div>
+      </div>
+    </div>
+    <footer><span>Quick Commands</span><span id="fTime3"></span></footer>
+  </div>
+  <div class="view" id="statusView">
+    <div class="page-view">
+      <div class="section">
+        <div class="section-title">Device Status <small id="lastPoll"></small></div>
+        <table class="st-table">
+          <tr><td>Device Name</td><td id="stName">&mdash;</td></tr>
+          <tr><td>IP Address</td><td id="stIP">&mdash;</td></tr>
+          <tr><td>Network</td><td id="stNet">&mdash;</td></tr>
+          <tr><td>Relay State</td><td id="stRelay">&mdash;</td></tr>
+          <tr><td>WiFi RSSI</td><td id="stRSSI">&mdash;</td></tr>
+          <tr><td>Auto-Restart</td><td id="stAutoInt">&mdash;</td></tr>
+          <tr><td>Server Connected</td><td id="stSrv">&mdash;</td></tr>
+          <tr><td>Sched Fired</td><td id="stFired">&mdash;</td></tr>
+        </table>
+      </div>
+    </div>
+    <footer><span>Device Status</span><span id="fTime4"></span></footer>
+  </div>
+  <div class="view" id="schedulerView">
+    <div class="page-view">
+      <div class="section">
+        <div class="section-title">Scheduler Status <small id="sCd"></small></div>
+        <div class="sched-stats"><div class="sched-stat"><div class="sched-stat-val" id="stFired2">0</div><div class="sched-stat-lbl">Fired</div></div><div class="sched-stat"><div class="sched-stat-val" id="stInterval">&mdash;</div><div class="sched-stat-lbl">Interval</div></div><div class="sched-stat"><div class="sched-stat-val" id="stNextIn">&mdash;</div><div class="sched-stat-lbl">Next in</div></div></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px"><div class="sched-status-row" style="flex:1;margin-bottom:0"><span class="sched-dot stopped" id="sStatusDot"></span><span class="sched-status-lbl" id="sStatusLbl">Stopped</span></div></div>
+        <div class="time-row"><div class="time-cell"><input type="number" id="sH" min="0" max="99" value="0"><span>Hours</span></div><div class="time-cell"><input type="number" id="sM" min="0" max="59" value="0"><span>Mins</span></div><div class="time-cell"><input type="number" id="sS" min="0" max="59" value="0"><span>Secs</span></div></div>
+        <select class="field-select" id="sAct"><option value="2" selected>&#8635; Restart (OFF then ON)</option><option value="1">&#9654; Turn ON</option><option value="0">&#9632; Turn OFF</option></select>
+        <div class="sched-btns"><button class="sched-start" onclick="schedStart()">&#9654; Start</button><button class="sched-stop" onclick="schedStop()">&#9632; Stop</button></div>
+        <div class="msg" id="sMsg"></div>
+      </div>
+    </div>
+    <footer><span>Scheduler</span><span id="fTime5"></span></footer>
+  </div>
+  <div class="view" id="watchdogView">
+    <div class="page-view">
+      <div class="section">
+        <div class="section-title">Device Watchdog <small id="tipLastCheck"></small></div>
+        <div id="tipRegBadge" style="display:none;background:linear-gradient(135deg,#d1fae5,#a7f3d0);border:1px solid #6ee7b7;border-radius:12px;padding:12px 14px;margin-bottom:12px;font-size:12px">
+          <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-weight:700;color:#065f46">&#9889; Auto-registered: <span id="tipRegName"></span></span><button onclick="clearRegistration()" style="font-size:11px;padding:3px 10px;border:1.5px solid #fca5a5;border-radius:8px;background:#fff;color:#dc2626;cursor:pointer;font-weight:600">Clear</button></div>
+          <div style="margin-top:5px;color:#6b7280;font-size:11px">MAC: <span id="tipRegMAC" style="font-family:monospace;font-weight:600"></span> &nbsp;|&nbsp; Port: <span id="tipRegPort" style="font-weight:600"></span></div>
+        </div>
+        <div class="tip-status"><div class="tip-dot" id="tipDot"></div><div><div class="tip-lbl" id="tipStatus">Not configured</div><div class="tip-sub" id="tipSub">Set a target IP or let device auto-register</div></div></div>
+        <div class="tip-row"><input class="field-inp" type="text" id="tipIP" placeholder="e.g. 192.168.1.50"><button class="btn-primary" style="margin-left:8px" onclick="setTargetIP()">Set</button><button class="btn-secondary" style="margin-left:8px" onclick="clearTargetIP()">Clear</button></div>
+        <div class="tip-stats"><div class="tip-stat"><div class="tip-stat-val" id="tipCurrent">&mdash;</div><div class="tip-stat-lbl">Target IP</div></div><div class="tip-stat"><div class="tip-stat-val" id="tipFails">&mdash;</div><div class="tip-stat-lbl">Fails (resets at 3)</div></div></div>
+      </div>
+    </div>
+    <footer><span>Device Watchdog</span><span id="fTime6"></span></footer>
+  </div>
+  <div class="view" id="allView">
+    <div class="page-view">
+      <div class="all-section-divider">&#8212; Server Health</div>
+      <div class="section">
+        <div class="section-title">Server Health <small id="shLastPollAll"></small></div>
+        <div class="sh-grid">
+          <div class="sh-tile"><div class="sh-tile-top"><span class="sh-tile-lbl">CPU Usage</span><span class="sh-tile-sub" id="shCpuCoresAll">&mdash;</span></div><div class="sh-tile-val" id="shCpuAll">&mdash;</div><div class="sh-bar-wrap"><div class="sh-bar" id="shCpuBarAll" style="width:0%"></div></div></div>
+          <div class="sh-tile"><div class="sh-tile-top"><span class="sh-tile-lbl">RAM Used</span><span class="sh-tile-sub" id="shRamTotalAll">&mdash;</span></div><div class="sh-tile-val" id="shRamAll">&mdash;</div><div class="sh-bar-wrap"><div class="sh-bar" id="shRamBarAll" style="width:0%"></div></div></div>
+        </div>
+        <div class="sh-row"><span class="sh-lbl">Server Uptime</span><span class="sh-val" id="shUptimeAll">&mdash;</span></div>
+        <div class="sh-row"><span class="sh-lbl">Process Memory</span><span class="sh-val" id="shProcMemAll">&mdash;</span></div>
+        <div class="sh-row"><span class="sh-lbl">Requests / min</span><span class="sh-val"><span class="sh-req-badge" id="shReqMinAll">&mdash;</span></span></div>
+        <div class="sh-row"><span class="sh-lbl">Server Status</span><span class="sh-val"><span class="sh-sdot ok" id="shStatusDotAll"></span><span id="shStatusTxtAll">Running</span></span></div>
+      </div>
+      <div class="all-section-divider">&#8212; Relay Control</div>
+      <div class="section">
+        <div class="section-title">Relay Control</div>
+        <div class="relay-state"><div class="dot off" id="rDotAll"></div><div><div class="relay-lbl" id="rTextAll">OFF</div><div class="relay-sub" id="rSubAll">Device is turned off</div></div></div>
+        <div class="relay-btns">
+          <button class="rbtn rbtn-on" id="bOnAll" onclick="relayCmd(1)"><em>&#9654;</em>ON</button>
+          <button class="rbtn rbtn-off" id="bOffAll" onclick="relayCmd(0)"><em>&#9632;</em>OFF</button>
+          <button class="rbtn rbtn-rst" id="bRstAll" onclick="relayCmd(2)"><em>&#8635;</em>RESTART</button>
+        </div>
+      </div>
+      <div class="all-section-divider">&#8212; Device Status</div>
+      <div class="section">
+        <div class="section-title">Device Status <small id="lastPollAll"></small></div>
+        <table class="st-table">
+          <tr><td>Device Name</td><td id="stNameAll">&mdash;</td></tr>
+          <tr><td>IP Address</td><td id="stIPAll">&mdash;</td></tr>
+          <tr><td>Network</td><td id="stNetAll">&mdash;</td></tr>
+          <tr><td>Relay State</td><td id="stRelayAll">&mdash;</td></tr>
+          <tr><td>WiFi RSSI</td><td id="stRSSIAll">&mdash;</td></tr>
+          <tr><td>Auto-Restart</td><td id="stAutoIntAll">&mdash;</td></tr>
+          <tr><td>Server Connected</td><td id="stSrvAll">&mdash;</td></tr>
+          <tr><td>Sched Fired</td><td id="stFiredAll">&mdash;</td></tr>
+        </table>
+      </div>
+      <div class="all-section-divider">&#8212; Auto-Restart Watchdog</div>
+      <div class="section">
+        <div class="section-title">Auto-Restart Watchdog</div>
+        <div class="ar-toggle-row"><div><div class="ar-lbl">Auto-restart watchdog</div><div class="ar-sub">Restart device on a fixed interval</div></div><label class="tog"><input type="checkbox" id="arEnabledAll" onchange="onArToggleChangeAll()"><span class="tog-slider"></span></label></div>
+        <div class="ar-row" style="margin-top:2px"><div><div class="ar-lbl">Restart interval</div><div class="ar-sub">How often</div></div><select class="ar-select" id="arIntervalAll" onchange="onArIntervalChangeAll()"><option value="30000">30s</option><option value="60000">1 min</option><option value="120000" selected>2 min</option><option value="300000">5 min</option><option value="600000">10 min</option><option value="900000">15 min</option><option value="1800000">30 min</option><option value="3600000">60 min</option></select></div>
+        <button class="btn-primary" style="width:100%;margin-top:14px" onclick="saveAutoIntervalAll()">Save &amp; Apply</button>
+        <div class="msg" id="arMsgAll"></div>
+        <div class="ar-status"><div class="ar-sdot" id="arDotAll"></div><span id="arStatusTxtAll">Loading&hellip;</span></div>
+      </div>
+      <div class="all-section-divider">&#8212; Scheduler</div>
+      <div class="section">
+        <div class="section-title">Scheduler <small id="sCdAll"></small></div>
+        <div class="sched-stats"><div class="sched-stat"><div class="sched-stat-val" id="stFired2All">0</div><div class="sched-stat-lbl">Fired</div></div><div class="sched-stat"><div class="sched-stat-val" id="stIntervalAll">&mdash;</div><div class="sched-stat-lbl">Interval</div></div><div class="sched-stat"><div class="sched-stat-val" id="stNextInAll">&mdash;</div><div class="sched-stat-lbl">Next in</div></div></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px"><div class="sched-status-row" style="flex:1;margin-bottom:0"><span class="sched-dot stopped" id="sStatusDotAll"></span><span class="sched-status-lbl" id="sStatusLblAll">Stopped</span></div></div>
+        <div class="time-row"><div class="time-cell"><input type="number" id="sHAll" min="0" max="99" value="0"><span>Hours</span></div><div class="time-cell"><input type="number" id="sMAll" min="0" max="59" value="0"><span>Mins</span></div><div class="time-cell"><input type="number" id="sSAll" min="0" max="59" value="0"><span>Secs</span></div></div>
+        <select class="field-select" id="sActAll"><option value="2" selected>&#8635; Restart (OFF then ON)</option><option value="1">&#9654; Turn ON</option><option value="0">&#9632; Turn OFF</option></select>
+        <div class="sched-btns"><button class="sched-start" onclick="schedStartAll()">&#9654; Start</button><button class="sched-stop" onclick="schedStopAll()">&#9632; Stop</button></div>
+        <div class="msg" id="sMsgAll"></div>
+      </div>
+      <div class="all-section-divider">&#8212; Device Watchdog</div>
+      <div class="section">
+        <div class="section-title">Device Watchdog <small id="tipLastCheckAll"></small></div>
+        <div class="tip-status"><div class="tip-dot" id="tipDotAll"></div><div><div class="tip-lbl" id="tipStatusAll">Not configured</div><div class="tip-sub" id="tipSubAll">Set a target IP or let device auto-register</div></div></div>
+        <div class="tip-row"><input class="field-inp" type="text" id="tipIPAll" placeholder="e.g. 192.168.1.50"><button class="btn-primary" style="margin-left:8px" onclick="setTargetIPAll()">Set</button><button class="btn-secondary" style="margin-left:8px" onclick="clearTargetIPAll()">Clear</button></div>
+        <div class="tip-stats"><div class="tip-stat"><div class="tip-stat-val" id="tipCurrentAll">&mdash;</div><div class="tip-stat-lbl">Target IP</div></div><div class="tip-stat"><div class="tip-stat-val" id="tipFailsAll">&mdash;</div><div class="tip-stat-lbl">Fails (resets at 3)</div></div></div>
+      </div>
+    </div>
+    <footer><span>All Sections</span><span id="fTimeAll"></span></footer>
+  </div>
+</div>
+<script>
+var _currentView='home';
+var _viewMap={home:'homeView',health:'healthView',relay:'relayView',commands:'commandsView',status:'statusView',scheduler:'schedulerView',watchdog:'watchdogView',all:'allView'};
+var _viewTitles={home:'SmartSwitch',health:'Server Health',relay:'Relay Control',commands:'Quick Commands',status:'Device Status',scheduler:'Scheduler',watchdog:'Device Watchdog',all:'All Sections'};
+function showView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  var id=_viewMap[name]||'homeView';
+  document.getElementById(id).classList.add('active');
+  _currentView=name;
+  document.getElementById('hdrTitle').textContent=_viewTitles[name]||'SmartSwitch';
+  var back=document.getElementById('hdrBack'),logo=document.querySelector('.hdr-logo'),tag=document.getElementById('hdrServerTag');
+  if(name==='home'){back.style.display='none';logo.style.display='block';tag.style.display='inline-block';}
+  else{back.style.display='flex';logo.style.display='none';tag.style.display='none';}
+  if(name==='all'){pollStatus();pollSched();pollServerHealth();}
+}
+function goHome(){showView('home');}
+var BASE='',DEVICE_NAME='SmartSwitch',_loggedInUser='';
+async function apiGet(path){try{const r=await fetch(BASE+path,{signal:AbortSignal.timeout(8000)});return await r.json();}catch(e){return null;}}
+async function apiPost(path,params){try{let url=BASE+path;if(params)url+='?'+new URLSearchParams(params).toString();const r=await fetch(url,{method:'POST',signal:AbortSignal.timeout(10000)});return await r.json();}catch(e){return null;}}
+async function apiPostJSON(path,body){try{const r=await fetch(BASE+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(8000)});return await r.json();}catch(e){return null;}}
+function togglePass(id,span){const inp=document.getElementById(id),svg=span.querySelector('svg');if(inp.type==='password'){inp.type='text';svg.innerHTML='<path d="M17.94 17.94A10 10 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';}else{inp.type='password';svg.innerHTML='<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';}}
+(function(){try{const s=localStorage.getItem('srv_cred');if(s){const d=JSON.parse(s);document.getElementById('lu').value=d.u||'';}}catch(e){}})();
+async function doLogin(){
+  const btn=document.getElementById('loginBtn'),err=document.getElementById('loginErr');
+  const u=document.getElementById('lu').value.trim(),p=document.getElementById('lp').value.trim();
+  if(!u){err.textContent='Enter username';return;}
+  if(!p){err.textContent='Enter password';return;}
+  btn.disabled=true;btn.textContent='Connecting\u2026';err.textContent='';
+  BASE=window.location.origin;
+  const h=await apiGet('/health');
+  if(!h||h.status!=='ok'){btn.disabled=false;btn.textContent='CONNECT';BASE='';err.textContent='Cannot reach server';return;}
+  const auth=await apiGet('/device/auth?user='+encodeURIComponent(u)+'&pass='+encodeURIComponent(p));
+  btn.disabled=false;btn.textContent='CONNECT';
+  if(!auth||!auth.ok){err.textContent='Invalid username or password';BASE='';return;}
+  localStorage.setItem('srv_cred',JSON.stringify({u}));
+  _loggedInUser=u;
+  document.getElementById('loginView').style.display='none';
+  const dv=document.getElementById('dashView');dv.style.display='flex';dv.style.flexDirection='column';
+  document.getElementById('userName').textContent=u;
+  document.getElementById('userAvatar').textContent=u.charAt(0).toUpperCase();
+  document.getElementById('ddUserName').textContent=u;
+  showView('home');
+  startPolling();
+}
+var _toggleLogs=[],_logFilter='all';
+function addToggleLog(kind,msg){const t=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});_toggleLogs.push({t,k:kind,m:msg});renderToggleLog();document.getElementById('qcTs').textContent='Updated '+t;}
+function kClass(k){return k==='ON'?'lk-on':k==='OFF'?'lk-off':k==='RST'?'lk-rst':'lk-info';}
+function renderToggleLog(){const box=document.getElementById('toggleLog');const v=_toggleLogs.filter(l=>_logFilter==='all'||l.k===_logFilter.toUpperCase()||(_logFilter==='rst'&&l.k==='RST'));if(!v.length){box.innerHTML='<span style="color:#d1d5db">No activity yet</span>';return;}box.innerHTML=v.slice().reverse().map(l=>`<div class="ll"><span class="lt">${l.t}</span><span class="lk ${kClass(l.k)}">${l.k}</span><span class="lm">${l.m}</span></div>`).join('');}
+function setLogFilter(f,btn){_logFilter=f;document.querySelectorAll('.ltag').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderToggleLog();}
+function clearToggleLog(){_toggleLogs=[];renderToggleLog();}
+var _arUserEditing=false,_arEditTimer=null;
+function onArIntervalChange(){_arUserEditing=true;if(_arEditTimer)clearTimeout(_arEditTimer);_arEditTimer=setTimeout(()=>{_arUserEditing=false;_arEditTimer=null;},30000);}
+function onArIntervalChangeAll(){_arUserEditing=true;document.getElementById('arInterval').value=document.getElementById('arIntervalAll').value;if(_arEditTimer)clearTimeout(_arEditTimer);_arEditTimer=setTimeout(()=>{_arUserEditing=false;_arEditTimer=null;},30000);}
+function fmtArInterval(ms){const s=Math.round(ms/1000);if(s<60)return s+'s';if(s<3600){const m=Math.floor(s/60),rs=s%60;return m+'m'+(rs?rs+'s':'');}return Math.floor(s/3600)+'h '+(Math.floor((s%3600)/60)||0)+'m';}
+function updateArUI(intervalMs,forceDropdown){
+  document.getElementById('arDot').className='ar-sdot on';
+  document.getElementById('arStatusTxt').textContent='Active \u2014 restarts every '+fmtArInterval(intervalMs);
+  document.getElementById('stAutoInt').textContent=fmtArInterval(intervalMs);
+  document.getElementById('arDotAll').className='ar-sdot on';
+  document.getElementById('arStatusTxtAll').textContent='Active \u2014 restarts every '+fmtArInterval(intervalMs);
+  document.getElementById('stAutoIntAll').textContent=fmtArInterval(intervalMs);
+  if(forceDropdown||!_arUserEditing){
+    const syncSel=(id)=>{const sel=document.getElementById(id);let closest='120000',minDiff=Infinity;for(const opt of sel.options){const diff=Math.abs(parseInt(opt.value)-intervalMs);if(diff<minDiff){minDiff=diff;closest=opt.value;}}sel.value=closest;};
+    syncSel('arInterval');syncSel('arIntervalAll');
+  }
+}
+async function onArToggleChange(){
+  const enabled=document.getElementById('arEnabled').checked;
+  document.getElementById('arEnabledAll').checked=enabled;
+  const ms=parseInt(document.getElementById('arInterval').value)||120000,val=enabled?ms:0;
+  let r=null;try{const resp=await fetch(BASE+'/device/set-restart-interval?value='+val,{method:'POST',signal:AbortSignal.timeout(12000)});if(resp.ok)r=await resp.json();}catch(e){}
+  const ok=r&&r.status==='ok';
+  const dot1=document.getElementById('arDot'),dot2=document.getElementById('arDotAll');
+  const txt1=document.getElementById('arStatusTxt'),txt2=document.getElementById('arStatusTxtAll');
+  dot1.className='ar-sdot '+(enabled&&ok?'on':'off');dot2.className='ar-sdot '+(enabled&&ok?'on':'off');
+  const statusTxt=enabled&&ok?'Active \u2014 restarts every '+fmtArInterval(ms):(enabled?'\u2716 Failed':'Disabled');
+  txt1.textContent=statusTxt;txt2.textContent=statusTxt;
+  if(ok&&enabled)addToggleLog('INFO','Auto-restart enabled');
+  if(ok&&!enabled)addToggleLog('INFO','Auto-restart disabled');
+}
+async function onArToggleChangeAll(){document.getElementById('arEnabled').checked=document.getElementById('arEnabledAll').checked;await onArToggleChange();}
+async function saveAutoInterval(){
+  const enabled=document.getElementById('arEnabled').checked,ms=parseInt(document.getElementById('arInterval').value)||120000,val=enabled?ms:0;
+  const btn=document.getElementById('arSaveBtn'),msg=document.getElementById('arMsg');
+  btn.disabled=true;btn.textContent='Saving\u2026';msg.textContent='';msg.className='msg';
+  let r=null,success=false;
+  try{const resp=await fetch(BASE+'/device/set-restart-interval?value='+val,{method:'POST',signal:AbortSignal.timeout(12000)});if(resp.ok){r=await resp.json();success=(r&&r.status==='ok');}else r={status:'error',message:'Server returned '+resp.status};}catch(e){r={status:'error',message:e.message};}
+  btn.disabled=false;btn.textContent='Save & Apply';
+  if(success){const actual=r.autoIntervalMs||ms;msg.textContent='\u2714 Set to '+fmtArInterval(actual);msg.className='msg ok';_arUserEditing=false;if(_arEditTimer){clearTimeout(_arEditTimer);_arEditTimer=null;}updateArUI(actual,true);addToggleLog('INFO','Auto-restart interval \u2192 '+fmtArInterval(actual));}
+  else{msg.textContent='\u2716 Failed \u2014 '+((r&&r.message)?r.message:'is ESP32 connected?');msg.className='msg err';}
+  setTimeout(()=>{msg.textContent='';msg.className='msg';},6000);
+}
+async function saveAutoIntervalAll(){
+  document.getElementById('arInterval').value=document.getElementById('arIntervalAll').value;
+  document.getElementById('arEnabled').checked=document.getElementById('arEnabledAll').checked;
+  const msg=document.getElementById('arMsgAll');
+  await saveAutoInterval();
+  msg.textContent=document.getElementById('arMsg').textContent;
+  msg.className=document.getElementById('arMsg').className;
+  setTimeout(()=>{msg.textContent='';msg.className='msg';},6000);
+}
+var _relayRestartTimer=null;
+function enableRelayBtns(){['bOn','bOff','bRst','bOnAll','bOffAll','bRstAll'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=false;});}
+function disableRelayBtns(){['bOn','bOff','bRst','bOnAll','bOffAll','bRstAll'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=true;});}
+function setRelayUI(state){
+  const setOne=(dotId,txtId,subId)=>{const dot=document.getElementById(dotId),txt=document.getElementById(txtId),sub=document.getElementById(subId);if(!dot)return;dot.className='dot';if(state==='restart'||state==='RESTARTING'){dot.classList.add('rst');txt.textContent='RESTARTING\u2026';txt.style.color='#d97706';sub.textContent='Back ON in ~3 seconds';}else if(state===true||state==='on'||state==='ON'){dot.classList.add('on');txt.textContent='ON';txt.style.color='#059669';sub.textContent='Device is turned on';}else{dot.classList.add('off');txt.textContent='OFF';txt.style.color='#dc2626';sub.textContent='Device is turned off';}};
+  setOne('rDot','rText','rSub');setOne('rDotAll','rTextAll','rSubAll');
+  if(state==='restart'||state==='RESTARTING'){disableRelayBtns();if(!_relayRestartTimer)_relayRestartTimer=setTimeout(()=>{_relayRestartTimer=null;enableRelayBtns();pollStatus();},4000);}
+  else{if(_relayRestartTimer){clearTimeout(_relayRestartTimer);_relayRestartTimer=null;}enableRelayBtns();const badge=document.getElementById('cardRelayBadge');if(state===true||state==='on'||state==='ON'){badge.textContent='ON';badge.className='nav-card-badge badge-on';}else{badge.textContent='OFF';badge.className='nav-card-badge badge-off';}}
+}
+async function relayCmd(cmd){
+  const names={0:'OFF',1:'ON',2:'RESTART'};
+  disableRelayBtns();if(cmd===2)setRelayUI('restart');else setRelayUI(cmd===1);
+  const r=await apiGet('/device/control?deviceId='+encodeURIComponent(DEVICE_NAME)+'&command='+cmd);
+  const ok=r&&r.status==='SUCCESS';
+  if(!ok){document.getElementById('rSub').textContent='\u26a0 '+(r&&r.message?r.message:'Command failed');document.getElementById('rSubAll').textContent='\u26a0 '+(r&&r.message?r.message:'Command failed');}
+  const lk=cmd===1?'ON':cmd===0?'OFF':'RST';
+  addToggleLog(lk,ok?names[cmd]+' sent':names[cmd]+' failed');
+  setTimeout(pollStatus,1000);
+}
+var _schedRem=0,_schedSync=0,_schedOn=false;
+function pad(n){return String(n).padStart(2,'0');}
+function fmtHMS(sec){if(!sec||sec<=0)return'00:00:00';let t=Math.floor(sec),hh=Math.floor(t/3600);t%=3600;const mm=Math.floor(t/60);t%=60;return`${pad(hh)}:${pad(mm)}:${pad(t)}`;}
+async function schedStart(){
+  const h=parseInt(document.getElementById('sH').value)||0,m=parseInt(document.getElementById('sM').value)||0,s=parseInt(document.getElementById('sS').value)||0,act=parseInt(document.getElementById('sAct').value)||2,msg=document.getElementById('sMsg');
+  const total=h*3600+m*60+s;if(total===0){msg.textContent='\u26a0 Set a non-zero interval';return;}
+  const r=await apiPost('/scheduler/start',{command:act,interval_seconds:total});
+  if(r&&r.status==='SUCCESS'){msg.textContent='\u2714 Started \u2014 every '+pad(h)+':'+pad(m)+':'+pad(s);updateSchedUI(true,total,0);}else msg.textContent='\u2716 Failed to start';
+  setTimeout(()=>{msg.textContent='';pollSched();},2000);
+}
+async function schedStartAll(){
+  document.getElementById('sH').value=document.getElementById('sHAll').value;
+  document.getElementById('sM').value=document.getElementById('sMAll').value;
+  document.getElementById('sS').value=document.getElementById('sSAll').value;
+  document.getElementById('sAct').value=document.getElementById('sActAll').value;
+  await schedStart();
+  const msg=document.getElementById('sMsgAll');
+  msg.textContent=document.getElementById('sMsg').textContent;
+  msg.className=document.getElementById('sMsg').className;
+  setTimeout(()=>{msg.textContent='';},3000);
+}
+async function schedStop(){
+  const msg=document.getElementById('sMsg'),r=await apiPost('/scheduler/stop');
+  if(r&&r.status==='SUCCESS'){msg.textContent='\u2714 Stopped';updateSchedUI(false,0,r.total_fired||0);}else msg.textContent='\u2716 Failed';
+  setTimeout(()=>{msg.textContent='';pollSched();},2000);
+}
+async function schedStopAll(){
+  await schedStop();
+  document.getElementById('sMsgAll').textContent=document.getElementById('sMsg').textContent;
+  setTimeout(()=>{document.getElementById('sMsgAll').textContent='';},3000);
+}
+function updateSchedUI(running,intervalSec,fired){
+  const syncPair=(a,b,v)=>{const e=document.getElementById(a),f=document.getElementById(b);if(e)e.textContent=v;if(f)f.textContent=v;};
+  syncPair('sStatusDot','sStatusDotAll',null);
+  document.getElementById('sStatusDot').className='sched-dot '+(running?'running':'stopped');
+  document.getElementById('sStatusDotAll').className='sched-dot '+(running?'running':'stopped');
+  syncPair('sStatusLbl','sStatusLblAll',running?'Running':'Stopped');
+  syncPair('stFired2','stFired2All',fired!=null?fired:'0');
+  /* FIX: show interval only when running; show 0 when stopped */
+  syncPair('stInterval','stIntervalAll',running?fmtHMS(intervalSec):'0');
+  document.getElementById('cardSchedBadge').textContent=running?'Running':'Stopped';
+  document.getElementById('cardSchedBadge').className='nav-card-badge '+(running?'badge-active':'badge-grey');
+  if(!running){syncPair('stNextIn','stNextInAll','\u2014');_schedOn=false;_schedRem=0;}else _schedOn=true;
+}
+function tickSched(){
+  if(!_schedOn||_schedRem<=0){document.getElementById('sCd').textContent='';document.getElementById('sCdAll').textContent='';document.getElementById('stNextIn').textContent='\u2014';document.getElementById('stNextInAll').textContent='\u2014';return;}
+  const remSec=Math.max(0,_schedRem-Math.floor((Date.now()-_schedSync)/1000));
+  const hms=fmtHMS(remSec);
+  document.getElementById('sCd').textContent='Next: '+hms;document.getElementById('sCdAll').textContent='Next: '+hms;
+  document.getElementById('stNextIn').textContent=hms;document.getElementById('stNextInAll').textContent=hms;
+}
+async function pollSched(){
+  const s=await apiGet('/scheduler/status');if(!s)return;
+  _schedOn=s.enabled;_schedRem=s.seconds_remaining||0;_schedSync=Date.now();
+  updateSchedUI(s.enabled,s.interval_seconds||0,s.total_fired||0);
+  if(s.enabled&&s.interval_seconds){const t=s.interval_seconds;document.getElementById('sH').value=Math.floor(t/3600);document.getElementById('sM').value=Math.floor((t%3600)/60);document.getElementById('sS').value=t%60;document.getElementById('sAct').value=String(s.command||2);document.getElementById('sHAll').value=Math.floor(t/3600);document.getElementById('sMAll').value=Math.floor((t%3600)/60);document.getElementById('sSAll').value=t%60;document.getElementById('sActAll').value=String(s.command||2);}
+  document.getElementById('stFired').textContent=(s.total_fired!=null?s.total_fired+'x':'\u2014');
+  document.getElementById('stFiredAll').textContent=(s.total_fired!=null?s.total_fired+'x':'\u2014');
+}
+async function pollStatus(){
+  const d=await apiGet('/device/status');if(!d)return;
+  if(d.name)DEVICE_NAME=d.name;
+  document.getElementById('offlineBanner').style.display=d.connected?'none':'block';
+  if(!_relayRestartTimer){if(d.restarting)setRelayUI('restart');else setRelayUI(d.relay_state===true);}
+  const devSt=document.getElementById('hdrDevStatus');devSt.textContent=d.connected?'Active':'Offline';devSt.className='hdr-stat-val '+(d.connected?'active':'offline');
+  const relSt=document.getElementById('hdrRelayStatus');relSt.textContent=d.relay_state?'ON':'OFF';relSt.className='hdr-stat-val '+(d.relay_state?'relay-on':'relay-off');
+  document.getElementById('hdrNet').textContent=d.network_type||'\u2014';
+  document.getElementById('hdrIP').textContent=d.ip||'\u2014';
+  const setEl=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  setEl('stName',d.name||'\u2014');setEl('stNameAll',d.name||'\u2014');
+  setEl('stIP',d.ip||'\u2014');setEl('stIPAll',d.ip||'\u2014');
+  const setNet=(id,val)=>{const e=document.getElementById(id);if(!e)return;e.textContent=val||'\u2014';e.className=(val||'').includes('Eth')?'c-eth':(val||'').includes('WiFi')?'c-wfi':'';};
+  setNet('stNet',d.network_type);setNet('stNetAll',d.network_type);
+  const setRelay=(id)=>{const e=document.getElementById(id);if(!e)return;if(d.restarting){e.textContent='Restarting\u2026';e.className='c-rst';}else if(d.relay_state===true){e.textContent='ON';e.className='c-on';}else{e.textContent='OFF';e.className='c-off';}};
+  setRelay('stRelay');setRelay('stRelayAll');
+  const rssiTxt=d.rssi?d.rssi+' dBm ('+(d.rssi>=-55?'Excellent':d.rssi>=-65?'Good':d.rssi>=-75?'Fair':'Weak')+')':'\u2014';
+  setEl('stRSSI',rssiTxt);setEl('stRSSIAll',rssiTxt);
+  const setSrv=(id)=>{const e=document.getElementById(id);if(!e)return;e.textContent=d.connected?'\u2714 Connected':'\u2716 Disconnected';e.className=d.connected?'c-on':'c-off';};
+  setSrv('stSrv');setSrv('stSrvAll');
+  if(d.auto_interval_ms){updateArUI(d.auto_interval_ms,false);if(!_arUserEditing){document.getElementById('arEnabled').checked=(d.auto_interval_ms>0);document.getElementById('arEnabledAll').checked=(d.auto_interval_ms>0);}}
+  document.getElementById('lastPoll').textContent='Updated '+new Date().toLocaleTimeString();
+  document.getElementById('lastPollAll').textContent='Updated '+new Date().toLocaleTimeString();
+  document.getElementById('cardStatusSub').textContent=d.ip||'Not connected';
+  document.getElementById('cardNetBadge').textContent=d.network_type||'\u2014';
+  updateTipUI(d);
+}
+async function setTargetIP(){
+  const ip=document.getElementById('tipIP').value.trim();if(!ip){document.getElementById('tipSub').textContent='Enter an IP address first';return;}
+  const r=await apiPost('/device/target-ip',{ip});
+  if(r&&(r.status==='SUCCESS'||r.status==='WARNING')){document.getElementById('tipCurrent').textContent=ip;document.getElementById('tipSub').textContent='\u2714 Set \u2014 ESP32 will ping every 30s';}
+  else document.getElementById('tipSub').textContent='\u2716 Failed \u2014 is ESP32 connected?';
+}
+async function setTargetIPAll(){
+  document.getElementById('tipIP').value=document.getElementById('tipIPAll').value;
+  await setTargetIP();setTimeout(pollStatus,1000);
+}
+async function clearTargetIP(){
+  await apiPost('/device/target-ip',{ip:''});
+  document.getElementById('tipIP').value='';document.getElementById('tipCurrent').textContent='\u2014';document.getElementById('tipFails').textContent='\u2014';
+  document.getElementById('tipDot').className='tip-dot';document.getElementById('tipStatus').textContent='Not configured';
+  document.getElementById('tipSub').textContent='Set a target IP or let device auto-register';document.getElementById('tipLastCheck').textContent='';
+}
+async function clearTargetIPAll(){
+  document.getElementById('tipIP').value='';document.getElementById('tipIPAll').value='';
+  await clearTargetIP();
+  document.getElementById('tipCurrentAll').textContent='\u2014';document.getElementById('tipFailsAll').textContent='\u2014';
+  document.getElementById('tipDotAll').className='tip-dot';document.getElementById('tipStatusAll').textContent='Not configured';
+  document.getElementById('tipSubAll').textContent='Set a target IP or let device auto-register';
+}
+async function clearRegistration(){
+  await apiPost('/device/target-ip',{ip:''});
+  document.getElementById('tipRegBadge').style.display='none';
+  document.getElementById('tipIP').value='';document.getElementById('tipIPAll').value='';
+  document.getElementById('tipCurrent').textContent='\u2014';document.getElementById('tipFails').textContent='\u2014';document.getElementById('tipCurrentAll').textContent='\u2014';document.getElementById('tipFailsAll').textContent='\u2014';
+  document.getElementById('tipDot').className='tip-dot';document.getElementById('tipStatus').textContent='Not configured';document.getElementById('tipSub').textContent='Set a target IP or let device auto-register';document.getElementById('tipLastCheck').textContent='';
+  document.getElementById('tipDotAll').className='tip-dot';document.getElementById('tipStatusAll').textContent='Not configured';document.getElementById('tipSubAll').textContent='Set a target IP or let device auto-register';
+}
+function updateTipUI(d){
+  if(!d)return;
+  const ip=d.target_ip||'';
+  const badge=document.getElementById('tipRegBadge');
+  if(d.reg_active&&d.reg_name){badge.style.display='block';document.getElementById('tipRegName').textContent=d.reg_name;document.getElementById('tipRegMAC').textContent=d.reg_mac||'\u2014';document.getElementById('tipRegPort').textContent=d.reg_port||80;}
+  else badge.style.display='none';
+  const setTip=(suffix)=>{
+    const sfx=suffix?'All':'';
+    document.getElementById('tipCurrent'+sfx).textContent=ip||'\u2014';
+    document.getElementById('tipFails'+sfx).textContent=ip?(d.ping_fails||0)+' / 3':'\u2014';
+    const dot=document.getElementById('tipDot'+sfx),st=document.getElementById('tipStatus'+sfx),sub=document.getElementById('tipSub'+sfx),cb=suffix?document.getElementById('cardTipBadge'):document.getElementById('cardTipBadge');
+    if(!ip){dot.className='tip-dot';st.textContent='Not configured';st.style.color='';sub.textContent='Set a target IP or let device auto-register';document.getElementById('tipLastCheck'+(suffix?'All':'')).textContent='';if(!suffix){cb.textContent='\u2014';cb.className='nav-card-badge badge-grey';}return;}
+    if(d.target_online===true){dot.className='tip-dot online';st.textContent=ip+' \u2014 ONLINE';st.style.color='#059669';sub.textContent='Device is responding to pings';if(!suffix){cb.textContent='Online';cb.className='nav-card-badge badge-on';}}
+    else if(d.target_online===false){dot.className='tip-dot offline';st.textContent=ip+' \u2014 OFFLINE';st.style.color='#dc2626';sub.textContent='Fail count: '+(d.ping_fails||0)+'/3 \u2014 restart at 3';if(!suffix){cb.textContent='Offline';cb.className='nav-card-badge badge-off';}}
+    else{dot.className='tip-dot';st.textContent=ip+' \u2014 Waiting\u2026';st.style.color='#9ca3af';sub.textContent='First ping in up to 30 seconds';if(!suffix){cb.textContent='Waiting';cb.className='nav-card-badge badge-grey';}}
+    document.getElementById('tipLastCheck'+(suffix?'All':'')).textContent='Pings every 30s';
+    if(ip&&!document.getElementById('tipIP'+(suffix?'All':'')).value)document.getElementById('tipIP'+(suffix?'All':'')).value=ip;
+  };
+  setTip(false);setTip(true);
+}
+var _shReqLast=0,_shReqLastTs=0;
+function barColor(pct){return pct<60?'#10b981':pct<80?'#f59e0b':'#ef4444';}
+function fmtBytes(mb){return mb>=1024?(mb/1024).toFixed(1)+' GB':mb.toFixed(0)+' MB';}
+function fmtUptime(sec){const d=Math.floor(sec/86400),h=Math.floor((sec%86400)/3600),m=Math.floor((sec%3600)/60),s=sec%60;if(d>0)return d+'d '+h+'h '+m+'m';if(h>0)return h+'h '+m+'m';if(m>0)return m+'m '+s+'s';return s+'s';}
+async function pollServerHealth(){
+  const h=await apiGet('/server/health');
+  const syncHealth=(suffix)=>{
+    const s=suffix?'All':'';
+    if(!h){const dot=document.getElementById('shStatusDot'+s);if(dot)dot.className='sh-sdot err';const txt=document.getElementById('shStatusTxt'+s);if(txt)txt.textContent='Unreachable';return;}
+    const cpu=h.cpu_percent||0;
+    const setV=(id,v)=>{const e=document.getElementById(id+s);if(e)e.textContent=v;};
+    const setW=(id,w,bg)=>{const e=document.getElementById(id+s);if(e){e.style.width=w;e.style.background=bg;}};
+    setV('shCpu',cpu.toFixed(1)+'%');setV('shCpuCores',(h.cpu_cores||'?')+' cores');
+    setW('shCpuBar',Math.min(cpu,100)+'%',barColor(cpu));
+    const ramPct=h.ram_percent||0;setV('shRam',ramPct.toFixed(1)+'%');setV('shRamTotal',fmtBytes(h.ram_used_mb||0)+' / '+fmtBytes(h.ram_total_mb||0));
+    setW('shRamBar',Math.min(ramPct,100)+'%',barColor(ramPct));
+    setV('shUptime',fmtUptime(Math.floor(h.server_uptime_sec||0)));
+    setV('shProcMem',fmtBytes(h.process_mem_mb||0));
+    const total=h.request_count||0;const now=Date.now();let rpm='\u2014';
+    if(!suffix&&_shReqLastTs>0){const elapsed=(now-_shReqLastTs)/60000;rpm=elapsed>0?Math.round((total-_shReqLast)/elapsed):0;}
+    if(!suffix){_shReqLast=total;_shReqLastTs=now;}
+    setV('shReqMin',rpm+' req/min');
+    const warn=cpu>80||ramPct>80;
+    const dot=document.getElementById('shStatusDot'+s);if(dot)dot.className='sh-sdot '+(warn?'warn':'ok');
+    const txt=document.getElementById('shStatusTxt'+s);if(txt)txt.textContent=warn?'High Load':'Running OK';
+  };
+  syncHealth(false);syncHealth(true);
+  if(h){const warn=(h.cpu_percent||0)>80||(h.ram_percent||0)>80;document.getElementById('cardHealthBadge').textContent=warn?'High Load':'Running';document.getElementById('cardHealthBadge').className='nav-card-badge '+(warn?'badge-off':'badge-blue');document.getElementById('shLastPoll').textContent='Updated '+new Date().toLocaleTimeString();document.getElementById('shLastPollAll').textContent='Updated '+new Date().toLocaleTimeString();}
+}
+function toggleUserMenu(){document.getElementById('userDropdown').classList.toggle('open');}
+document.addEventListener('click',function(e){const wrap=document.querySelector('.user-wrap');if(wrap&&!wrap.contains(e.target))document.getElementById('userDropdown').classList.remove('open');});
+function openChangePw(){document.getElementById('userDropdown').classList.remove('open');['cpCurrent','cpNew','cpConfirm'].forEach(id=>document.getElementById(id).value='');document.getElementById('cpMsg').textContent='';document.getElementById('changePwModal').classList.add('open');}
+function closeChangePw(){document.getElementById('changePwModal').classList.remove('open');}
+async function doChangePw(){
+  const cur=document.getElementById('cpCurrent').value,nw=document.getElementById('cpNew').value,cf=document.getElementById('cpConfirm').value,msg=document.getElementById('cpMsg');
+  if(!cur||!nw||!cf){msg.textContent='All fields required';msg.className='modal-msg err';return;}
+  if(nw!==cf){msg.textContent='Passwords do not match';msg.className='modal-msg err';return;}
+  if(nw.length<4){msg.textContent='Too short (min 4)';msg.className='modal-msg err';return;}
+  msg.textContent='Saving\u2026';msg.className='modal-msg';
+  const r=await apiPostJSON('/device/change-password',{user:_loggedInUser,current:cur,password:nw});
+  if(r&&r.ok){msg.textContent='\u2714 Password changed';msg.className='modal-msg ok';setTimeout(closeChangePw,2000);}else{msg.textContent='\u2716 '+(r&&r.msg?r.msg:'Failed');msg.className='modal-msg err';}
+}
+function doLogout(){
+  BASE='';_loggedInUser='';_intervals.forEach(clearInterval);_intervals=[];localStorage.removeItem('srv_cred');
+  document.getElementById('dashView').style.display='none';document.getElementById('loginView').style.display='flex';
+  document.getElementById('lu').value='';document.getElementById('lp').value='';document.getElementById('loginErr').textContent='';
+  ['hdrDevStatus','hdrRelayStatus','hdrNet','hdrIP'].forEach(id=>document.getElementById(id).textContent='\u2014');
+  document.getElementById('userAvatar').textContent='?';document.getElementById('userName').textContent='User';document.getElementById('ddUserName').textContent='\u2014';
+  _arUserEditing=false;if(_arEditTimer){clearTimeout(_arEditTimer);_arEditTimer=null;}
+}
+var _intervals=[];
+function startPolling(){
+  if(_intervals.length)return;
+  pollStatus();pollSched();pollServerHealth();
+  _intervals.push(setInterval(pollStatus,3000));
+  _intervals.push(setInterval(pollSched,5000));
+  _intervals.push(setInterval(pollServerHealth,5000));
+  _intervals.push(setInterval(tickSched,1000));
+  _intervals.push(setInterval(tickClock,1000));
+}
+function tickClock(){
+  const t=new Date().toLocaleTimeString();
+  ['footerTime','fTime1','fTime2','fTime3','fTime4','fTime5','fTime6','fTimeAll'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=t;});
+}
+tickClock();
+</script>
+</body>
+</html>

@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VerifAI SmartSwitch — Setup</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, Helvetica, sans-serif; }
+
+    body {
+      min-height: 100vh;
+      background-color: #f5f5f5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 440px;
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+
+    /* Red top bar matching dashboard header */
+    .card-header {
+      background: #ef3340;
+      padding: 20px 28px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .card-header .icon {
+      width: 36px;
+      height: 36px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .card-header h1 {
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .card-header p {
+      color: rgba(255,255,255,0.8);
+      font-size: 11px;
+      margin-top: 2px;
+    }
+
+    .card-body {
+      padding: 28px;
+    }
+
+    /* Error / success message injected by firmware via <!--ERROR--> */
+    .err {
+      background: #fff5f5;
+      border: 1px solid #ffcdd2;
+      border-left: 4px solid #ef3340;
+      border-radius: 4px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #c62828;
+      margin-bottom: 20px;
+    }
+
+    .section-label {
+      font-size: 10px;
+      font-weight: bold;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #aaa;
+      margin-bottom: 14px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 11px;
+      font-weight: bold;
+      color: #444;
+      margin-bottom: 6px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 13px;
+      color: #333;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #ef3340;
+      box-shadow: 0 0 0 2px rgba(239,51,64,0.12);
+    }
+
+    .form-group input::placeholder { color: #bbb; }
+
+    .hint {
+      font-size: 11px;
+      color: #aaa;
+      margin-top: 4px;
+    }
+
+    .password-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .password-wrapper input { margin-bottom: 0; }
+
+    .toggle-password {
+      position: absolute;
+      right: 12px;
+      cursor: pointer;
+      color: #888;
+      display: flex;
+      align-items: center;
+      transition: color 0.2s;
+    }
+
+    .toggle-password:hover { color: #ef3340; }
+    .toggle-password svg { width: 17px; height: 17px; }
+
+    .divider { height: 1px; background: #f0f0f0; margin: 22px 0; }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      background: #ef3340;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 4px;
+    }
+
+    .btn:hover { background: #d32f2f; }
+    .btn:active { transform: scale(0.98); }
+
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 16px;
+      font-size: 12px;
+      color: #888;
+      text-decoration: none;
+    }
+
+    .back-link:hover { color: #ef3340; }
+
+    .info-box {
+      background: #f9f9f9;
+      border: 1px solid #eee;
+      border-radius: 6px;
+      padding: 12px 14px;
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 22px;
+      line-height: 1.7;
+    }
+
+    .info-box b { color: #333; }
+  </style>
+</head>
+<body>
+
+<div class="card">
+
+  <div class="card-header">
+    <div class="icon">⚙️</div>
+    <div>
+      <h1>Device Setup</h1>
+      <p>VerifAI SmartSwitch Configuration</p>
+    </div>
+  </div>
+
+  <div class="card-body">
+
+    <div class="info-box">
+      💡 Connect to <b>SmartSwitch-Setup</b> WiFi, then open <b>http://192.168.4.1</b>
+    </div>
+
+    <!--ERROR-->
+
+    <form method="POST" action="/config">
+
+      <div class="section-label">Device</div>
+
+      <div class="form-group">
+        <label>DEVICE NAME</label>
+        <input type="text" name="devname" value="__DN__"
+               maxlength="32" required placeholder="e.g. SmartSwitch">
+      </div>
+
+      <div class="divider"></div>
+      <div class="section-label">WiFi Network</div>
+
+      <div class="form-group">
+        <label>SSID (Network Name)</label>
+        <input type="text" name="ssid" value="__SSID__"
+               maxlength="64" placeholder="Your WiFi network name">
+      </div>
+
+      <div class="form-group">
+        <label>PASSWORD</label>
+        <div class="password-wrapper">
+          <input type="password" name="pass" id="wifiPass"
+                 maxlength="64" placeholder="Leave blank to keep existing">
+          <span class="toggle-password" onclick="togglePass()">
+            <svg id="eyeIcon" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          </span>
+        </div>
+        <p class="hint">Leave blank to keep the existing password</p>
+      </div>
+
+      <button type="submit" class="btn">💾 Save &amp; Connect</button>
+
+    </form>
+
+    <a class="back-link" href="/">← Back to Dashboard</a>
+
+  </div>
+</div>
+
+<script>
+  function togglePass() {
+    const input = document.getElementById('wifiPass');
+    const icon  = document.getElementById('eyeIcon');
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+    } else {
+      input.type = 'password';
+      icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+    }
+  }
+</script>
+
+</body>
+</html>
